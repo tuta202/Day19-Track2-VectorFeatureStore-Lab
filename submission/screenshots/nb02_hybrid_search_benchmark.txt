@@ -1,0 +1,15 @@
+NB02 Evidence — Hybrid Search Precision@10 Benchmark
+
+BM25 + vector indices ready (1000 docs)
+
+Precision@10 (avg over 50 queries):
+  Keyword (BM25)   : 77.8%
+  Semantic (vector): 73.2%
+  Hybrid  (RRF=60) : 78.6%   <- HYBRID WINS ✓
+
+  type           n       kw     sem     hyb
+  exact         15   96.7%  88.7%  96.7%
+  paraphrase    15   33.3%  24.0%  32.0%
+  mixed         20   97.0%  98.5% 100.0%   ← HYBRID 100% on mixed queries
+
+Key insight: Hybrid wins overall (+0.8pp over BM25) and dominates on mixed queries (100% vs 97-98%).

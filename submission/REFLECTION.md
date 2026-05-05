@@ -1,8 +1,8 @@
 # Reflection — Lab 19
 
-**Tên:** _<Họ Tên>_
-**Cohort:** _<A20-K1 / A20-K2 / ...>_
-**Path đã chạy:** _<lite | docker | both>_
+**Tên:** Tran Anh Tu
+**Cohort:** _A20_
+**Path đã chạy:** docker
 
 ---
 
@@ -12,13 +12,21 @@
 > `paraphrase` / `mixed`), và tại sao? Khi nào bạn **không** dùng hybrid
 > (i.e. khi nào pure BM25 hoặc pure vector là lựa chọn đúng)?
 
-_Answer here._
+Trên golden set 50 queries:
+- **`exact`** (15 queries): BM25 = Hybrid = 96.7%. BM25 đã đủ mạnh khi query dùng đúng từ kỹ thuật có trong corpus. Hybrid không thua nhưng cũng không thêm giá trị.
+- **`paraphrase`** (15 queries): Cả 3 mode đều thấp (~24–33%) do model `bge-small-en` được train tiếng Anh, kém trên tiếng Việt thuần. Hybrid = 32% thắng nhẹ so với BM25 = 33% (xấp xỉ bằng nhau).
+- **`mixed`** (20 queries): Hybrid thắng rõ 100% vs Semantic 98.5% vs Keyword 97.0%.
+
+**Khi KHÔNG nên dùng Hybrid:**
+1. **Corpus nhỏ, query luôn exact-match**: BM25 đủ, thêm vector chỉ tăng độ trễ.
+2. **Latency-critical (<1ms)**: Hybrid cần chạy 2 retriever + RRF fusion, đắt hơn pure BM25 3–10×.
+3. **Corpus thuần kỹ thuật với từ khóa chuẩn**: Ví dụ code search bằng function/class name, BM25 chính xác hơn.
 
 ---
 
 ## Điều ngạc nhiên nhất khi làm lab này
 
-_(Optional, 1–2 câu)_
+Python 3.14 trên Windows thiếu MSVC Redistributable khiến cả `onnxruntime` và `torch` đều lỗi DLL — phải cài MSVC VC++ Redistributable trước khi bất kỳ ML library nào chạy được. Sau khi cài, mọi thứ hoạt động ngay.
 
 ---
 

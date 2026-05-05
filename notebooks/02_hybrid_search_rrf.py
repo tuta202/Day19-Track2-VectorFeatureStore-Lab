@@ -21,7 +21,7 @@ import json
 import statistics
 from pathlib import Path
 
-from fastembed import TextEmbedding
+from sentence_transformers import SentenceTransformer
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams, PointStruct
 from rank_bm25 import BM25Okapi
@@ -39,7 +39,7 @@ tokenized = [(d["title"] + " " + d["text"]).lower().split() for d in docs]
 bm25 = BM25Okapi(tokenized)
 
 # Vector
-embedder = TextEmbedding(model_name="BAAI/bge-small-en-v1.5")
+embedder = SentenceTransformer("BAAI/bge-small-en-v1.5")
 client = QdrantClient(":memory:")
 client.create_collection(
     collection_name="lab19",
@@ -50,7 +50,7 @@ points = []
 for start in range(0, len(docs), BATCH):
     batch = docs[start:start + BATCH]
     texts = [d["title"] + " " + d["text"] for d in batch]
-    vectors = list(embedder.embed(texts))
+    vectors = embedder.encode(texts, normalize_embeddings=True)
     for i, (d, v) in enumerate(zip(batch, vectors)):
         points.append(PointStruct(
             id=start + i, vector=v.tolist(),
@@ -74,7 +74,7 @@ def search_keyword(query: str, top_k: int = TOP_K) -> list[str]:
 
 
 def search_semantic(query: str, top_k: int = TOP_K) -> list[str]:
-    q_vec = next(embedder.embed([query])).tolist()
+    q_vec = embedder.encode([query], normalize_embeddings=True)[0].tolist()
     res = client.query_points(collection_name="lab19", query=q_vec, limit=top_k)
     return [p.payload["doc_id"] for p in res.points]
 

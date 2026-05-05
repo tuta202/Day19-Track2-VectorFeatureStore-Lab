@@ -1,0 +1,21 @@
+NB03 Evidence — FastAPI /search Latency Benchmark
+
+Healthz: {'ready': True, 'n_docs': 1000}
+
+Single hybrid query response:
+  latency_ms: 26.7
+  top-3 hits:
+       cloud_016  score=0.0325  Điện toán đám mây: tự động mở rộng theo lưu lượng
+       cloud_072  score=0.0323  Điện toán đám mây: tự động mở rộng theo lưu lượng
+       cloud_053  score=0.0315  Điện toán đám mây: tự động mở rộng theo lưu lượng
+
+Latency Table (P50/P95/P99 server-side, warm start):
+  mode            P50      P95      P99  P99(wall)
+  keyword       2.6ms    4.9ms    8.0ms   2775.1ms
+  semantic      5.9ms   35.9ms  118.7ms   2716.0ms
+  hybrid        7.6ms   22.0ms   25.1ms   3374.2ms
+
+Hybrid P99 server-side: 25.1ms
+PASS — hybrid P99 < 50ms (25.1ms) ✓
+
+Note: P99(wall) high due to Windows subprocess overhead, not server latency.

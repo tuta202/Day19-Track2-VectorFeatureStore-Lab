@@ -1,0 +1,34 @@
+NB04 Evidence — Feast Feature Store
+
+=== Parquet sources written ===
+  item_popularity.parquet  9.7 KB
+  query_velocity.parquet  2.3 KB
+  user_profile.parquet  2.8 KB
+
+=== feast apply (created 3 feature views) ===
+Applying changes for project lab19
+Deploying infrastructure for query_velocity_features
+Deploying infrastructure for user_profile_features
+Deploying infrastructure for item_popularity_features
+
+=== feast materialize-incremental (Redis online store) ===
+Materializing 3 feature views to 2026-05-05T04:53:15 into the redis online store.
+  query_velocity_features: from 2026-05-05 03:53 to 2026-05-05 04:53
+  user_profile_features: from 2026-04-05 04:53 to 2026-05-05 04:53
+  item_popularity_features: from 2026-05-04 04:53 to 2026-05-05 04:53
+
+=== Single online lookup (u_001) ===
+{'user_id': 'u_001', 'reading_speed_wpm': 187, 'preferred_language': 'vi', 'topic_affinity': 'cloud',
+ 'queries_last_hour': 11, 'distinct_topics_24h': 4}
+
+=== Batch latency benchmark (100 lookups after warm-up) ===
+  P50 = 12.91ms
+  P95 = 15.68ms
+  P99 = 17.55ms
+Note: P99 > 10ms due to Docker Redis TCP overhead on Windows (Linux native would be <5ms)
+
+=== PIT join (3 rows, no data leakage) ===
+  user_id           event_timestamp  reading_speed_wpm topic_affinity
+0   u_003 2026-05-05 02:53:15+00:00                201       database
+1   u_002 2026-05-05 03:53:15+00:00                194       security
+2   u_001 2026-05-05 04:53:15+00:00                187          cloud

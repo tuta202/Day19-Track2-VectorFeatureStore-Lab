@@ -17,6 +17,7 @@
 # %%
 import _setup  # noqa: F401
 import subprocess
+import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -26,6 +27,9 @@ REPO_ROOT = Path(_setup.__file__).resolve().parent.parent
 FEAST_DIR = REPO_ROOT / "app" / "feast_repo"
 FEAST_DATA = FEAST_DIR / "data"
 FEAST_DATA.mkdir(exist_ok=True)
+FEAST_BIN = REPO_ROOT / ".venv" / "Scripts" / "feast.exe"
+if not FEAST_BIN.exists():
+    FEAST_BIN = REPO_ROOT / ".venv" / "bin" / "feast"  # Linux/Mac fallback
 
 # %% [markdown]
 # ## 1. Sinh dữ liệu offline (Parquet) cho 3 feature views
@@ -84,7 +88,7 @@ for p in sorted(FEAST_DATA.glob("*.parquet")):
 
 # %%
 res = subprocess.run(
-    ["feast", "apply"],
+    [str(FEAST_BIN), "apply"],
     cwd=str(FEAST_DIR),
     capture_output=True, text=True, check=False,
 )
@@ -104,7 +108,7 @@ assert res.returncode == 0, f"feast apply failed: {res.stderr}"
 # %%
 end_dt = NOW.strftime("%Y-%m-%dT%H:%M:%S")
 res = subprocess.run(
-    ["feast", "materialize-incremental", end_dt],
+    [str(FEAST_BIN), "materialize-incremental", end_dt],
     cwd=str(FEAST_DIR),
     capture_output=True, text=True, check=False,
 )
@@ -150,6 +154,10 @@ print({k: v[0] for k, v in features.items()})
 # ## 5. TODO — Batch latency benchmark (100 lookups, P99)
 
 # %%
+# Warm-up: prime connection pool and internal caches before measuring
+for i in range(5):
+    fs.get_online_features(features=REQUEST_FEATURES, entity_rows=[{"user_id": f"u_{i:03d}"}]).to_dict()
+
 latencies: list[float] = []
 for i in range(100):
     user_id = f"u_{i:03d}"
@@ -185,7 +193,7 @@ else:
 import pandas as pd
 entity_df = pd.DataFrame({
     "user_id": ["u_001", "u_002", "u_003"],
-    "event_timestamp": [NOW - timedelta(hours=2), NOW - timedelta(hours=1), NOW],
+    "event_timestamp": [NOW, NOW - timedelta(hours=1), NOW - timedelta(hours=2)],
 })
 
 historical = fs.get_historical_features(

@@ -17,6 +17,7 @@
 import _setup  # noqa: F401
 import statistics
 import subprocess
+import sys
 import time
 from pathlib import Path
 
@@ -31,7 +32,7 @@ import httpx
 # %%
 ROOT = Path(_setup.__file__).resolve().parent.parent
 proc = subprocess.Popen(
-    ["uvicorn", "app.main:app", "--port", "8000", "--log-level", "warning"],
+    [sys.executable, "-m", "uvicorn", "app.main:app", "--port", "8000", "--log-level", "warning"],
     cwd=str(ROOT),
 )
 
@@ -101,6 +102,13 @@ def benchmark_mode(mode: str, reps: int = 2) -> dict[str, float]:
         "p99_wall":   percentile(wall_latencies, 0.99),
     }
 
+
+# Warm-up: run 15 queries per mode so the embedding model is hot before measuring
+print("Warming up...")
+for wmode in ("keyword", "semantic", "hybrid"):
+    for q in golden[:5]:
+        httpx.get(f"{URL}/search", params={"q": q["query"], "mode": wmode})
+print("Warm-up done.")
 
 print(f"  {'mode':10}  {'P50':>7}  {'P95':>7}  {'P99':>7}  {'P99(wall)':>9}")
 results = {}

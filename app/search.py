@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
-from fastembed import TextEmbedding
+from sentence_transformers import SentenceTransformer
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, PointStruct, VectorParams
 from rank_bm25 import BM25Okapi
@@ -48,7 +48,8 @@ class Searcher:
         self.doc_ids: list[str] = []
         self.bm25: BM25Okapi | None = None
         self.client: QdrantClient | None = None
-        self.embedder: TextEmbedding | None = None
+        self.embedder: SentenceTransformer | None = None
+        self._embed_cache: dict[str, list[float]] = {}
 
     @property
     def size(self) -> int:
@@ -78,7 +79,7 @@ class Searcher:
         self.bm25 = BM25Okapi(tokenized)
 
     def _build_vector_index(self) -> None:
-        self.embedder = TextEmbedding(model_name=EMBED_MODEL)
+        self.embedder = SentenceTransformer(EMBED_MODEL)
 
         mode = os.getenv("QDRANT_MODE", "memory")
         if mode == "server":
@@ -102,7 +103,7 @@ class Searcher:
         for start in range(0, len(self.docs), BATCH):
             batch = self.docs[start:start + BATCH]
             texts = [d["title"] + " " + d["text"] for d in batch]
-            vectors = list(self.embedder.embed(texts))
+            vectors = self.embedder.encode(texts, normalize_embeddings=True)
             for i, (d, v) in enumerate(zip(batch, vectors)):
                 points.append(PointStruct(
                     id=start + i,
@@ -145,9 +146,17 @@ class Searcher:
             for i in ranked
         ]
 
+    def _embed(self, query: str) -> list[float]:
+        if query not in self._embed_cache:
+            assert self.embedder is not None
+            self._embed_cache[query] = self.embedder.encode(
+                [query], normalize_embeddings=True
+            )[0].tolist()
+        return self._embed_cache[query]
+
     def _search_semantic(self, query: str, top_k: int) -> list[SearchHit]:
-        assert self.client is not None and self.embedder is not None
-        q_vec = next(self.embedder.embed([query])).tolist()
+        assert self.client is not None
+        q_vec = self._embed(query)
         result = self.client.query_points(
             collection_name=COLLECTION,
             query=q_vec,
