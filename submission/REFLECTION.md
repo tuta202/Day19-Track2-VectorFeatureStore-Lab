@@ -31,7 +31,3 @@ Python 3.14 trên Windows thiếu MSVC Redistributable khiến cả `onnxruntime
 
 ---
 
-## Bonus challenge
-
-- [ ] Đã làm bonus (xem `bonus/`)
-- [ ] Pair work với: _<tên đồng đội nếu có>_
