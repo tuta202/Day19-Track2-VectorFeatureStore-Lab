@@ -49,6 +49,30 @@ services:
       timeout: 3s
       retries: 5
 
+  app:
+    build: .
+    container_name: day19-app
+    depends_on:
+      qdrant:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      - QDRANT_MODE=server
+      - QDRANT_URL=http://qdrant:6333
+      - REDIS_URL=redis://redis:6379/0
+      - POSTGRES_URL=postgresql://feast:feast@postgres:5432/feast_offline
+      - FEAST_ONLINE_STORE=redis
+      - FEAST_OFFLINE_STORE=postgres
+      - EMBEDDING_BACKEND=fastembed
+
+
 volumes:
   qdrant_storage:
   redis_data:

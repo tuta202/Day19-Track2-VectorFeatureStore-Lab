@@ -1,7 +1,8 @@
 # Reflection — Lab 19
 
-**Tên:** Tran Anh Tu
-**Cohort:** _A20_
+**Tên:** Trần Anh Tú
+**Mã học viên:** 2A202600291
+**Cohort:** Track 2
 **Path đã chạy:** docker
 
 ---
